@@ -10,9 +10,14 @@ import com.archyx.aureliumskills.skills.foraging.ForagingAbilities;
 import com.archyx.aureliumskills.skills.mining.MiningAbilities;
 import com.archyx.aureliumskills.stats.Stat;
 import com.archyx.aureliumskills.stats.StatLeveler;
+import com.archyx.aureliumskills.stats.Stats;
 import com.archyx.aureliumskills.util.item.ItemUtils;
+import com.archyx.aureliumskills.util.version.VersionUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeInstance;
+import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -20,12 +25,10 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class ItemListener implements Listener {
 
@@ -107,6 +110,10 @@ public class ItemListener implements Listener {
                             Set<Stat> statsToReload = new HashSet<>();
                             // Remove modifiers from stored item
                             if (!stored.getType().equals(Material.AIR)) {
+                                fixItemAttributeModifierHealth(player, stored);
+                                if (hasHealthAttributeModifier(stored)) {
+                                    statsToReload.add(Stats.HEALTH);
+                                }
                                 PlayerData playerData = plugin.getPlayerManager().getPlayerData(player);
                                 if (playerData != null) {
                                     for (StatModifier modifier : modifiers.getModifiers(ModifierType.ITEM, stored)) {
@@ -125,6 +132,9 @@ public class ItemListener implements Listener {
                             }
                             // Add modifiers from held item
                             if (!held.getType().equals(Material.AIR)) {
+                                if (hasHealthAttributeModifier(held)) {
+                                    statsToReload.add(Stats.HEALTH);
+                                }
                                 if (OptionL.getBoolean(Option.MODIFIER_AUTO_CONVERT_FROM_LEGACY)) {
                                     held = requirements.convertFromLegacy(modifiers.convertFromLegacy(held));
                                     if (!held.equals(player.getInventory().getItemInMainHand())) {
@@ -274,6 +284,37 @@ public class ItemListener implements Listener {
                 }
             }
         }.runTaskTimer(plugin, 0L, OptionL.getInt(Option.MODIFIER_ITEM_CHECK_PERIOD));
+    }
+
+    // Checks whether an item has a vanilla health attribute modifier
+    private boolean hasHealthAttributeModifier(ItemStack item) {
+        if (VersionUtils.isAtLeastVersion(14)) {
+            ItemMeta meta = item.getItemMeta();
+            if (meta != null && meta.hasAttributeModifiers()) {
+                Collection<AttributeModifier> attributeModifiers = meta.getAttributeModifiers(Attribute.GENERIC_MAX_HEALTH);
+                return attributeModifiers != null && attributeModifiers.size() > 0;
+            }
+        }
+        return false;
+    }
+
+    // Fixes health being above max health when a vanilla attribute modifier is removed
+    private void fixItemAttributeModifierHealth(Player player, ItemStack item) {
+        if (VersionUtils.isAtLeastVersion(14)) {
+            ItemMeta meta = item.getItemMeta();
+            if (meta != null && meta.hasAttributeModifiers()) {
+                Collection<AttributeModifier> attributeModifiers = meta.getAttributeModifiers(Attribute.GENERIC_MAX_HEALTH);
+                if (attributeModifiers != null && attributeModifiers.size() > 0) {
+                    AttributeInstance attributeInstance = player.getAttribute(Attribute.GENERIC_MAX_HEALTH);
+                    if (attributeInstance != null) {
+                        double maxHealth = attributeInstance.getValue();
+                        if (player.getHealth() > maxHealth) {
+                            player.setHealth(maxHealth);
+                        }
+                    }
+                }
+            }
+        }
     }
 
 }
