@@ -3,7 +3,7 @@
 # |                                                                            | #
 # |                    Discord: https://discord.gg/Bh2EZfB                     | #
 # |            Source Code: https://github.com/Archy-X/AureliumSkills          | #
-# | Config Guide: https://github.com/Archy-X/AureliumSkills/wiki/Configuration | #
+# |      Config Guide: https://wiki.aurelium.dev/skills/config/main-config     | #
 # +----------------------------------------------------------------------------+ #
 # Plugin made by Archy
 
@@ -36,6 +36,7 @@ languages:
     - de
     - lt
     - ru
+    - it
 
 # Action Bar Options
 action-bar:
@@ -102,10 +103,6 @@ leaderboards:
     update-delay: 6000
 
 # Skill Options
-# Change the equation that calculates xp level requirements (XpRequired = Multiplier * (level - 2) ^ 2 + 100)
-# Default: 100
-skill-level-requirements-multiplier: 100
-
 enable-skill-commands: true
 
 check-block-replace: true
@@ -151,9 +148,12 @@ modifier:
     item:
         check-period: 3
         enable-off-hand: true
+    multiplier:
+        enabled: true
     auto-convert-from-legacy: true
 
 requirement:
+    enabled: true
     item:
         prevent-tool-use: true
         prevent-weapon-use: true
@@ -287,6 +287,7 @@ health:
     hp-indicator-scaling: 1
     update-delay: 0
     force-base-health: false
+    keep-full-on-increase: false
 
 strength:
     modifier: 0.5
