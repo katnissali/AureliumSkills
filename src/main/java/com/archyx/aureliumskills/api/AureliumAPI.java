@@ -27,6 +27,7 @@ public class AureliumAPI {
      * @param plugin AureliumSkills instance
      */
     public static void setPlugin(AureliumSkills plugin) {
+        System.out.println("Attempting to set plugin, current plugin: " + plugin);
         if (AureliumAPI.plugin == null) {
             AureliumAPI.plugin = plugin;
         } else {
